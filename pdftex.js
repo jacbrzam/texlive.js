@@ -5,7 +5,25 @@ var TeXLive = function(opt_workerPath) {
     opt_workerPath = '';
   }
 
+  const bintoBlob = (byteCharacters, contentType='', sliceSize=512) => {
+    const byteArrays = [];
 
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    const blob = new Blob(byteArrays, {type: contentType});
+    return blob;
+  }
+  
   var component = function(workerPath) {
     var self = this;
     var worker = new Worker(workerPath);
@@ -81,8 +99,8 @@ var TeXLive = function(opt_workerPath) {
       function(binary_pdf) {
         if(binary_pdf === false)
           return p.done(false);
-        pdf_dataurl = 'data:application/pdf;charset=binary;base64,' + window.btoa(binary_pdf);
-        return p.done(pdf_dataurl);
+        pdf_blob = bintoBlob(binary_pdf, "application/pdf")
+        return p.done(pdf_blob);
       });
     return p;
   };
